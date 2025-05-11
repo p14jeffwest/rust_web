@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한자를 한글로 변환</title>
+    <link rel="stylesheet" href="css/main.css">
+    <script src="js/main.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>한자를 한글로 변환하기</h1>
+        <div class="input-section">
+            <label for="inputText">한자가 포함된 문자열 입력:</label><br>
+            <textarea id="inputText" rows="8" cols="50" placeholder="여기에 한자를 입력하세요"></textarea>
+        </div>
+        <div class="button-section">
+            <button onclick="convertToHangul()">한글로 변환하기</button>
+        </div>
+        <div class="output-section">
+            <label for="outputText">변환된 문자열:</label><br>
+            <textarea id="outputText" rows="8" cols="50" readonly></textarea>
+        </div>
+    </div>
+</body>
+</html>

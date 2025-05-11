@@ -1,0 +1,24 @@
+appenders:
+  stdout:
+    kind: console    
+    filters:
+      - kind: threshold
+        level: warn
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S)} {l} - {m}{n}"
+
+  file_loger:
+    kind: file
+    filters:
+      - kind: threshold
+        level: info
+    path: "log/log.txt"
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S)} {l} - {m}{n}"
+
+root: 
+  level: info
+  appenders:
+    - stdout
+    - file_loger
+
