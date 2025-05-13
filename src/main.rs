@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+
 use std::sync::Arc;
 
 use axum::{
@@ -26,11 +26,7 @@ struct OutputData {
     converted_text: String,
 }
 
-struct Dictionary {
-    char_dic: HashMap<char, char>,
-    dueum_dic: HashMap<char, char>,
-    word_dic: HashMap<String, String>,
-}
+
 
 async fn hello_rust() -> impl IntoResponse {
     let path = std::path::PathBuf::from("index.html");
@@ -46,7 +42,7 @@ async fn hello_rust() -> impl IntoResponse {
 
 async fn convert_handler(
         ExtractJson(payload): ExtractJson<InputData>,
-        dic: Arc<Dictionary>) -> impl IntoResponse {    
+        dic: Arc<rust_web::Dictionary>) -> impl IntoResponse {    
     match rust_web::convert_str(&payload.text, &dic.char_dic, &dic.dueum_dic, &dic.word_dic).await {
         Some(converted_text) => {
             let response = OutputData {
@@ -64,43 +60,79 @@ async fn convert_handler(
     }        
 }
 
+
+
 #[tokio::main]
 async fn main() {  
+    // 1. log4rs 설정
     log4rs::init_file("log4rs.yml", Default::default()).unwrap();
     log::info!("Starting server...");
 
+    // 3. HTTP 및 HTTPS 서버 시작
+    let http = tokio::spawn(http_server());
+    let https = tokio::spawn(https_server());
+    let _ = tokio::join!(http, https);
+}
+
+
+// for http
+async fn http_server() {
     // 한자 변환 사전을 만들어 둔다. dic=(char_dic, dueum_dic, word_dic)
-    let dic = match rust_web::load_dictionary() {
+    let dic_arc = match rust_web::load_arc_dictionary() {
         Ok(dic) => dic,
         Err(e) => {
             log::error!("사전 로드 실패: {}", e);
             return;
         }        
-    };
-    
-    let dic_arc = Arc::new(Dictionary {
-        char_dic: dic.0,
-        dueum_dic: dic.1,
-        word_dic: dic.2,
-    });
+    };   
 
     let app = Router::new()
-        .route("/", get(hello_rust))
-        .route(
-            "/convert", 
-            post({                
-                let  dic_clone = std::sync::Arc::clone(&dic_arc);
-                move |payload| convert_handler(payload, dic_clone)                
-            }),
-        )
-        .nest_service("/css", ServeDir::new("css"))
-        .nest_service("/js", ServeDir::new("js"))
-        ;
+    .route("/", get(hello_rust))
+    .route(
+        "/convert", 
+        post({                
+            let  dic_clone = std::sync::Arc::clone(&dic_arc);
+            move |payload| convert_handler(payload, dic_clone)                
+        }),
+    )
+    .nest_service("/css", ServeDir::new("css"))
+    .nest_service("/js", ServeDir::new("js"))
+    ;
+
+    let http_addr = "127.0.0.1:8000".parse::<SocketAddr>().unwrap();    
+    let listener = tokio::net::TcpListener::bind(http_addr).await.unwrap();
+    println!("HTTPS Listening on {}", http_addr);
+    axum::serve(listener, app).await.unwrap();
+}
+
+
+async fn https_server() {
+    // 한자 변환 사전을 만들어 둔다. dic=(char_dic, dueum_dic, word_dic)
+    let dic_arc = match rust_web::load_arc_dictionary() {
+        Ok(dic) => dic,
+        Err(e) => {
+            log::error!("사전 로드 실패: {}", e);
+            return;
+        }        
+    };   
+
+    let app = Router::new()
+    .route("/", get(hello_rust))
+    .route(
+        "/convert", 
+        post({                
+            let  dic_clone = std::sync::Arc::clone(&dic_arc);
+            move |payload| convert_handler(payload, dic_clone)                
+        }),
+    )
+    .nest_service("/css", ServeDir::new("css"))
+    .nest_service("/js", ServeDir::new("js"))
+    ;
 
     // for https    
     let rustls_config = match RustlsConfig::from_pem_file(
-        "cert/cert.pem",
-        "cert/key.pem",           
+        "cert_local/cert.pem",
+        "cert_local/key.pem",           
     ).await {
         Ok(config) => config,
         Err(e) => {
@@ -115,4 +147,7 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+
 }
+
+

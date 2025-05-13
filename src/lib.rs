@@ -3,6 +3,7 @@ mod hanja_word;
 mod dueum;
 
 use std::{collections::HashMap, error::Error};
+use std::sync::Arc;
 
 const KO_START:u32 = 44032;
 const KO_END:u32 = 55203;
@@ -19,8 +20,24 @@ const CHI_E3:u32 = 64045;
 const CHI_S4:u32 = 64048;
 const CHI_E4:u32 = 64109;
 
+pub struct Dictionary {
+    pub char_dic: HashMap<char, char>,
+    pub dueum_dic: HashMap<char, char>,
+    pub word_dic: HashMap<String, String>,
+}
 
-pub fn load_dictionary() 
+pub fn load_arc_dictionary() 
+        -> Result<Arc<Dictionary>, Box<dyn Error>> {
+    let dic = load_dictionary()?;
+    let dic_arc = Arc::new(Dictionary {
+        char_dic: dic.0,
+        dueum_dic: dic.1,
+        word_dic: dic.2,
+    });
+    Ok(dic_arc)
+}
+
+fn load_dictionary() 
         -> Result<(HashMap<char, char>, HashMap<char, char>, HashMap<String, String>), Box<dyn Error>> {
     
     //1. 기본한자 변환 사전
