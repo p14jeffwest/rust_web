@@ -1,0 +1,1 @@
+sudo systemctl stop rust_web.service

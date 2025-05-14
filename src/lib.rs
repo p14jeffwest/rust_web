@@ -2,6 +2,7 @@ mod hanja_char;
 mod hanja_word;
 mod dueum;
 
+use std::env;
 use std::{collections::HashMap, error::Error};
 use std::sync::Arc;
 
@@ -19,6 +20,40 @@ const CHI_E3:u32 = 64045;
 
 const CHI_S4:u32 = 64048;
 const CHI_E4:u32 = 64109;
+
+pub struct Config {
+    pub mode: &'static str,
+    pub base_http_url: &'static str,
+    pub base_https_url: &'static str,
+    pub https_redirect: &'static str,
+    pub ssl_cert: &'static str,
+    pub ssl_key: &'static str,
+}
+
+pub fn get_config() -> Config {
+    // Get the runtime argument for mode (default to "dev")
+    let args: Vec<String> = env::args().collect();
+    let mode = args.get(1).map(|s| s.as_str()).unwrap_or("dev");
+
+    match mode {
+        "dev" => Config {      
+            mode: "dev",     
+            base_http_url: "127.0.0.1:8000",            
+            base_https_url: "127.0.0.1:443",
+            https_redirect: "https://127.0.0.1:443",
+            ssl_cert: "cert_local/cert.pem",
+            ssl_key: "cert_local/key.pem",
+        },
+        _ => Config {       
+            mode: "prod",     
+            base_http_url: "0.0.0.0:80",
+            base_https_url : "0.0.0.0:443",
+            https_redirect: "https://badang.xyz",
+            ssl_cert: "/etc/letsencrypt/live/badang.xyz/fullchain.pem",
+            ssl_key: "/etc/letsencrypt/live/badang.xyz/privkey.pem",
+        },
+    }
+}
 
 pub struct Dictionary {
     pub char_dic: HashMap<char, char>,
