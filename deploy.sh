@@ -4,7 +4,7 @@
 # This script build rust code and copy all required files to `web_server` directory.
 
 # Set deployment directory
-DEPLOY_DIR="/home/ubuntu/rust_web/web_erver/"
+DEPLOY_DIR="/home/ubuntu/rust_web/web_server/"
 
 # 1. stop web server to avoid file conflict to copy files to deploy directory
 ./stop_service.sh
@@ -26,7 +26,7 @@ echo "Deployment completed successfully."
 # 4. remove src directory
 # sudo rm -r ./src
 
-# 4. start web server
+# 5. start web server
 ./start_service.sh
 
 # rust_web.service file is located in the 'etc/systemd/system' directory
