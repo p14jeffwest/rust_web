@@ -2,13 +2,7 @@
 use std::sync::Arc;
 
 use axum::{
-    routing::get,
-    routing::post,
-    Router,
-    response::Html,
-    response::IntoResponse,
-    Json,
-    extract::Json as ExtractJson,
+    extract::Json as ExtractJson, response::{Html, IntoResponse, Redirect}, routing::{get, post}, Json, Router
 };
 use axum_server::tls_rustls::RustlsConfig;
 use std::net::SocketAddr;
@@ -67,46 +61,39 @@ async fn main() {
     log::info!("Starting server...");
 
     // 2. HTTP 및 HTTPS 서버 시작
-    let http = tokio::spawn(http_server());
+    let http = tokio::spawn(http_server());    
     let https = tokio::spawn(https_server());
     let _ = tokio::join!(http, https);
+
+    // 서버에서 HTTPS 사용할 수 있도록 설정완료 전에 사용하는 코드 
+    // let http = tokio::spawn(http_server());        
+    // let _ = tokio::join!(http);
 }
 
 
-// for http
-async fn http_server() {
-    // 1. 한자 변환 사전을 만들어 둔다.
-    let dic_arc = match rust_web::load_arc_dictionary() {
-        Ok(dic) => dic,
-        Err(e) => {
-            log::error!("사전 로드 실패: {}", e);
-            return;
-        }        
-    };   
-
-    //2. cargo run --dev 혹은 cargo run --prod
+// HTTP로 들어온 요청을 HTTPS로 리다이렉트한다. 
+async fn http_server(){
+    let app = Router::new().route("/", get(http_handler));
     let config = Arc::new(rust_web::get_config());
-    println!("Running in mode: {}", config.mode);
-    
-    //3. http 서버를 시작한다.
-    let app = Router::new()
-    .route("/", get(hello_rust))
-    .route(
-        "/convert", 
-        post({                
-            let  dic_clone = std::sync::Arc::clone(&dic_arc);
-            move |payload| convert_handler(payload, dic_clone)                
-        }),
-    )
-    .nest_service("/css", ServeDir::new("css"))
-    .nest_service("/js", ServeDir::new("js"))
-    ;
-
     let http_addr = config.base_http_url.parse::<SocketAddr>().unwrap(); //127.0.0.1:8000 or 0.0.0.1:80  
-    let listener = tokio::net::TcpListener::bind(http_addr).await.unwrap();
-    println!("HTTPS Listening on {}", http_addr);
-    axum::serve(listener, app).await.unwrap();
+
+    println!("HTTP Listening on {}", http_addr);
+    axum_server::bind(http_addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();   
 }
+
+async fn http_handler() -> Redirect {  
+    let config = Arc::new(rust_web::get_config());
+    let uri = config.https_redirect;      
+    Redirect::temporary(uri)
+
+    // let uri = format!("https://127.0.0.1:443");
+    // Redirect::temporary(&uri)
+}
+
+
 
 // for https
 async fn https_server() {
