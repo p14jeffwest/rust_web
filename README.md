@@ -69,6 +69,8 @@ https://wikidocs.net/book/17658
 3. 의존성을 설치합니다:  
 
 > HTTPS를 지원하기위해 Crypto 패키지를 사용하는 것이 있어서, 그러한 패키지가 없으면 cargo build에 의해서 컴파일되지 않을 수 있습니다. 이 부분은 여기를 참조`https://wikidocs.net/284734`하기 바랍니다.  
+
+
     ```bash
     cargo build
     ```
@@ -114,3 +116,4 @@ https://wikidocs.net/book/17658
 
 - 이메일: p14jeffwest@gmail.com
 - GitHub: [p14jeffwest](https://github.com/p14jeffwest)
+- 이 프로젝트의 소스코드 작성 및 상세 설명 https://wikidocs.net/284734
